@@ -486,6 +486,15 @@ jobs:
           echo "KBUILD_BUILD_TIMESTAMP=$DATESTR" >> $GITHUB_ENV
           echo "KBUILD_BUILD_VERSION=1" >> $GITHUB_ENV
 
+      - name: 修复 kleaf 时间戳覆盖 (防止内核版本日期固定 1970)
+        run: |
+          set -e
+          SETUP_ENV=build/repo/build/kernel/kleaf/_setup_env.sh
+          test -f "$SETUP_ENV" || { echo "::error::$SETUP_ENV 不存在"; exit 1; }
+          sed -i '/^export KBUILD_BUILD_TIMESTAMP=/d' "$SETUP_ENV"
+          printf 'export KBUILD_BUILD_TIMESTAMP="${KBUILD_BUILD_TIMESTAMP:-$(date -d @${SOURCE_DATE_EPOCH})}"\n' >> "$SETUP_ENV"
+          grep -n "KBUILD_BUILD_TIMESTAMP" "$SETUP_ENV"
+
       - name: 内核基础修复 (zram 内建 + nr_requests)
         run: |
           set -e
