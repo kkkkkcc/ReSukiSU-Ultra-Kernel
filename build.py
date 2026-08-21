@@ -1084,7 +1084,7 @@ class Builder:
                 frag_flag = f"--defconfig_fragment=//common:arch/arm64/configs/tesla.fragment"
         lto = "--lto=thin" if self.env.get("kernel_version") != "6.12" else "--lto=none"
 
-        cmd = f"tools/bazel build --config=fast {lto} --action_env=KBUILD_BUILD_TIMESTAMP {frag_flag} //common:kernel_aarch64_dist"
+        cmd = f"tools/bazel build --config=fast --config=stamp {lto} --action_env=KBUILD_BUILD_TIMESTAMP {frag_flag} //common:kernel_aarch64_dist"
         run(cmd, cwd=kr, timeout=10800, log_output=True)
 
         img = kr / "bazel-bin" / "common" / "kernel_aarch64" / "Image"
