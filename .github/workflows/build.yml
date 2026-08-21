@@ -543,7 +543,7 @@ jobs:
           sed -i 's/BUILD_SYSTEM_DLKM=1/BUILD_SYSTEM_DLKM=0/' common/build.config.gki.aarch64
           sed -i '/KMI_SYMBOL_LIST_STRICT_MODE/d' common/build.config.gki.aarch64
           tools/bazel build --disk_cache=/home/runner/.cache/bazel \
-            --config=fast --lto=thin \
+            --config=fast --config=stamp --lto=thin \
             --action_env=KBUILD_BUILD_TIMESTAMP \
             --defconfig_fragment=//common:arch/arm64/configs/tesla.fragment \
             //common:kernel_aarch64_dist
