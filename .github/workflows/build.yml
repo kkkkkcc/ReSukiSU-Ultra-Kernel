@@ -137,7 +137,7 @@ jobs:
           set -e
           cd build/repo
           # 克隆 ReSukiSU-Ultra 分支
-          git clone --depth 1 https://github.com/pengzenzen-creator/ReSukiSU-Ultra KernelSU
+          git clone --depth 1 https://github.com/kkkkkcc/ReSukiSU-Ultra KernelSU
           cd KernelSU
           git checkout ${{ inputs.ksu_branch }}
           echo "KSU commit: $(git rev-parse --short HEAD)"
