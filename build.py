@@ -1005,6 +1005,7 @@ class Builder:
             datestr = bt
         else:
             datestr = datetime.datetime.now(datetime.timezone.utc).strftime("%a %b %d %H:%M:%S UTC %Y")
+            os.environ["KBUILD_BUILD_TIMESTAMP"] = datestr
         f = self.kernel_root / "common" / "scripts" / "mkcompile_h"
         if f.exists():
             import re
@@ -1014,6 +1015,13 @@ class Builder:
             txt = txt.replace("cat <<EOF",
                               f'cat <<EOF\n#undef UTS_VERSION\n#define UTS_VERSION "#1 SMP PREEMPT {datestr}"')
             f.write_text(txt)
+          setup_env = self.kernel_root / "build" / "kernel" / "kleaf" / "_setup_env.sh"
+       if setup_env.exists():
+           txt = setup_env.read_text()
+           txt = "\n".join(l for l in txt.splitlines()
+                           if not l.startswith("export KBUILD_BUILD_TIMESTAMP="))
+           txt += '\nexport KBUILD_BUILD_TIMESTAMP="${KBUILD_BUILD_TIMESTAMP:-$(date -d @${SOURCE_DATE_EPOCH})}"\n'
+           setup_env.write_text(txt)
         Log.ok(f"构建时间: {datestr}")
 
     # ================= 9. 编译 =================
@@ -1075,7 +1083,7 @@ class Builder:
                 frag_flag = f"--defconfig_fragment=//common:arch/arm64/configs/tesla.fragment"
         lto = "--lto=thin" if self.env.get("kernel_version") != "6.12" else "--lto=none"
 
-        cmd = f"tools/bazel build --config=fast {lto} {frag_flag} //common:kernel_aarch64_dist"
+        cmd = f"tools/bazel build --config=fast {lto} --action_env=KBUILD_BUILD_TIMESTAMP {frag_flag} //common:kernel_aarch64_dist"
         run(cmd, cwd=kr, timeout=10800, log_output=True)
 
         img = kr / "bazel-bin" / "common" / "kernel_aarch64" / "Image"
