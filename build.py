@@ -1005,7 +1005,7 @@ class Builder:
             datestr = bt
         else:
             datestr = datetime.datetime.now(datetime.timezone.utc).strftime("%a %b %d %H:%M:%S UTC %Y")
-            os.environ["KBUILD_BUILD_TIMESTAMP"] = datestr
+        os.environ["KBUILD_BUILD_TIMESTAMP"] = datestr
         f = self.kernel_root / "common" / "scripts" / "mkcompile_h"
         if f.exists():
             import re
@@ -1015,13 +1015,14 @@ class Builder:
             txt = txt.replace("cat <<EOF",
                               f'cat <<EOF\n#undef UTS_VERSION\n#define UTS_VERSION "#1 SMP PREEMPT {datestr}"')
             f.write_text(txt)
-          setup_env = self.kernel_root / "build" / "kernel" / "kleaf" / "_setup_env.sh"
-       if setup_env.exists():
-           txt = setup_env.read_text()
-           txt = "\n".join(l for l in txt.splitlines()
-                           if not l.startswith("export KBUILD_BUILD_TIMESTAMP="))
-           txt += '\nexport KBUILD_BUILD_TIMESTAMP="${KBUILD_BUILD_TIMESTAMP:-$(date -d @${SOURCE_DATE_EPOCH})}"\n'
-           setup_env.write_text(txt)
+        setup_env = self.kernel_root / "build" / "kernel" / "_setup_env.sh"
+        if setup_env.exists():
+            txt = setup_env.read_text()
+            txt = "\n".join(l for l in txt.splitlines()
+                            if not l.startswith("export KBUILD_BUILD_TIMESTAMP="))
+            txt += '\nexport KBUILD_BUILD_TIMESTAMP="${KBUILD_BUILD_TIMESTAMP:-$(date -d @${SOURCE_DATE_EPOCH})}"\n'
+            setup_env.write_text(txt)
+            Log.ok("kleaf _setup_env.sh 时间戳覆盖已修复 (保留外部 KBUILD_BUILD_TIMESTAMP)")
         Log.ok(f"构建时间: {datestr}")
 
     # ================= 9. 编译 =================
