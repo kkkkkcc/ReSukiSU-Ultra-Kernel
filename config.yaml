@@ -24,7 +24,7 @@ ksu:
   # 注: 完整克隆上游 (无 --depth, KSU_VERSION 需要全 git 历史)
 
 susfs:
-  enabled: false                 # 是否应用 SUSFS 补丁 (FolkPatch 版关闭)
+  enabled: true                  # 是否应用 SUSFS 补丁 (FolkPatch 版关闭)
   # 6.6.118 基线自动启用 seccomp PF_EXITING 兼容修复 (防死机)
 
 # ============ 功能开关 (每个独立, true=开 false=关) ============
@@ -55,7 +55,7 @@ features:
 
   # ---- 特殊修复 ----
   extract_cert_fix: true         # extract-cert.c PKCS11 key_pass LTS bug (make 直编必需)
-  pkg_visibility: false          # FUSE 包目录隔离 (堵 /sdcard/Android/data 枚举 + /data/data 探测; root 授权 app 自动豁免)
+  pkg_visibility: true           # FUSE 包目录隔离 (堵 /sdcard/Android/data 枚举 + /data/data 探测; root 授权 app 自动豁免)
   fusebpf: true                  # FUSEBPF 修复 (lookup_revalidate + no-Eexist)
   zram_lz4kd: true               # zram LZ4 补丁栈 (LZ4 1.10/lz4k/lz4kd)
   unicode_bypass: true           # Unicode 零宽字符绕过 (需 SUSFS)
