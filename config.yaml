@@ -24,7 +24,7 @@ ksu:
   # 注: 完整克隆上游 (无 --depth, KSU_VERSION 需要全 git 历史)
 
 susfs:
-  enabled: true                  # 是否应用 SUSFS 补丁 (FolkPatch 版关闭)
+  enabled: false                 # 是否应用 SUSFS 补丁 (FolkPatch 版关闭)
   # 6.6.118 基线自动启用 seccomp PF_EXITING 兼容修复 (防死机)
 
 # ============ 功能开关 (每个独立, true=开 false=关) ============
