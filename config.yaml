@@ -14,7 +14,7 @@ build:
   os_patch_level: "2026-01"      # 自动: 6.6.77=2025-03, 6.6.118=2026-01
   lts_merge: false               # 不跟随 LTS (只 6.6.77/6.6.118 两个基线)
   kernel_dir: "build/repo"       # repo 源码目录 (自包含)
-  build_time: "N"                # 自定义构建时间, N=当前UTC; 例: "Sun Dec 01 08:10:00 UTC 2024"
+  build_time: "Thu May 28 07:48:46 UTC 2026"                # 自定义构建时间, N=当前UTC; 例: "Sun Dec 01 08:10:00 UTC 2024"
 
 # ============ KSU / SUSFS ============
 # FolkPatch 版: ksu.enabled=false + susfs.enabled=false (纯净内核, 由 FolkPatch App patch boot 注入 root)
