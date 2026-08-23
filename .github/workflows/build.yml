@@ -132,82 +132,82 @@ jobs:
           test -f common/Makefile && echo "common/Makefile OK"
 
       # ==================== 添加 KernelSU (ReSukiSU-Ultra) ====================
-      - name: 添加 KernelSU (ReSukiSU-Ultra)
-        run: |
-          set -e
-          cd build/repo
+      #- name: 添加 KernelSU (ReSukiSU-Ultra)
+        #run: |
+          #set -e
+          #cd build/repo
           # 克隆 ReSukiSU-Ultra 分支
-          git clone --depth 1 https://github.com/kkkkkcc/ReSukiSU-Ultra KernelSU
-          cd KernelSU
-          git checkout ${{ inputs.ksu_branch }}
-          echo "KSU commit: $(git rev-parse --short HEAD)"
-          cd ..
+          #git clone --depth 1 https://github.com/kkkkkcc/ReSukiSU-Ultra KernelSU
+          #cd KernelSU
+          #git checkout ${{ inputs.ksu_branch }}
+          #echo "KSU commit: $(git rev-parse --short HEAD)"
+          #cd ..
 
           # 集成到内核树 (setup.sh 逻辑)
-          cd common/drivers
-          ln -sf "$(realpath --relative-to=. ../../KernelSU/kernel)" kernelsu
-          grep -q "kernelsu" Makefile || printf "\nobj-\$(CONFIG_KSU) += kernelsu/\n" >> Makefile
-          grep -q "drivers/kernelsu/Kconfig" Kconfig || sed -i "/endmenu/i\source \"drivers/kernelsu/Kconfig\"" Kconfig
-          echo "KernelSU 集成完成"
+          #cd common/drivers
+          #ln -sf "$(realpath --relative-to=. ../../KernelSU/kernel)" kernelsu
+          #grep -q "kernelsu" Makefile || printf "\nobj-\$(CONFIG_KSU) += kernelsu/\n" >> Makefile
+          #grep -q "drivers/kernelsu/Kconfig" Kconfig || sed -i "/endmenu/i\source \"drivers/kernelsu/Kconfig\"" Kconfig
+          #echo "KernelSU 集成完成"
 
           # ===== seccomp PF_EXITING 兼容修复 (6.6.118+ 防死机, 参考 build.py step05d) =====
-          if [ "${{ inputs.sub_level }}" == "118" ]; then
-            APP_PROFILE="../../KernelSU/kernel/policy/app_profile.c"
-            if [ -f "$APP_PROFILE" ] && grep -q "KERNEL_VERSION(6, 11, 0)" "$APP_PROFILE"; then
-              sed -i 's/KERNEL_VERSION(6, 11, 0)/KERNEL_VERSION(6, 6, 118)/' "$APP_PROFILE"
-              echo "PF_EXITING 兼容修复已注入 (6.6.118+)"
-            else
-              echo "PF_EXITING 无需修复或已修复"
-            fi
-          fi
+          #if [ "${{ inputs.sub_level }}" == "118" ]; then
+            #APP_PROFILE="../../KernelSU/kernel/policy/app_profile.c"
+            #if [ -f "$APP_PROFILE" ] && grep -q "KERNEL_VERSION(6, 11, 0)" "$APP_PROFILE"; then
+              #sed -i 's/KERNEL_VERSION(6, 11, 0)/KERNEL_VERSION(6, 6, 118)/' "$APP_PROFILE"
+              #echo "PF_EXITING 兼容修复已注入 (6.6.118+)"
+            #else
+              #echo "PF_EXITING 无需修复或已修复"
+            #fi
+          #fi
 
       # ==================== 应用 SUSFS (gitlab 上游) ====================
-      - name: 应用 SUSFS
-        run: |
-          set -e
-          cd build/repo
+      #- name: 应用 SUSFS
+        #run: |
+         # set -e
+          #cd build/repo
           # gitlab simonpunk 上游
-          git clone --depth 1 -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }} \
-            https://gitlab.com/simonpunk/susfs4ksu.git susfs4ksu
-          echo "SUSFS commit: $(git -C susfs4ksu log -1 --format='%H')"
+          #git clone --depth 1 -b gki-${{ inputs.android_version }}-${{ inputs.kernel_version }} \
+           # https://gitlab.com/simonpunk/susfs4ksu.git susfs4ksu
+          #echo "SUSFS commit: $(git -C susfs4ksu log -1 --format='%H')"
 
           # 应用补丁 (参考 build.py step05e)
-          cp susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
-          cp -r susfs4ksu/kernel_patches/fs/* ./common/fs/
-          cp -r susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
-          cd common
-          patch -p1 -F 3 -N --batch < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch
+          #cp susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
+          #cp -r susfs4ksu/kernel_patches/fs/* ./common/fs/
+          #cp -r susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+          #cd common
+          #patch -p1 -F 3 -N --batch < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch
           # 关键验证: SUSFS exec/stat hook 必须打上 (sucompat 依赖)
-          if ! grep -q "ksu_handle_execveat" fs/exec.c; then
-            echo "::error::SUSFS exec.c hook 缺失! su 将不可用"
-            exit 1
-          fi
-          if ! grep -q "ksu_handle_stat" fs/stat.c; then
-            echo "::error::SUSFS stat.c hook 缺失!"
-            exit 1
-          fi
+          #if ! grep -q "ksu_handle_execveat" fs/exec.c; then
+           # echo "::error::SUSFS exec.c hook 缺失! su 将不可用"
+            #exit 1
+          #fi
+          #if ! grep -q "ksu_handle_stat" fs/stat.c; then
+           # echo "::error::SUSFS stat.c hook 缺失!"
+            #exit 1
+          #fi
 
           # 6.6 上下文修复 (参考 GKI_KernelSU_SUSFS): 补丁 hunk 失配时补 susfs_def.h
-          if grep -q 'SUSFS_IS_INODE_SUS_MAP\|susfs_is_current_proc_umounted\|SUSFS_IS_INODE_OPEN_REDIRECT' fs/proc/base.c && ! grep -qF 'susfs_def.h' fs/proc/base.c; then
-            grep -qF '#include <linux/dma-buf.h>' fs/proc/base.c || sed -i '/#include <linux/cpufreq_times.h>/a #include <linux/dma-buf.h>' fs/proc/base.c
-            sed -i '/#include <linux/dma-buf.h>/a #endif' fs/proc/base.c
-            sed -i '/#include <linux/dma-buf.h>/a #include <linux/susfs_def.h>' fs/proc/base.c
-            sed -i '/#include <linux/dma-buf.h>/a #if defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)' fs/proc/base.c
-            echo "  base.c susfs_def.h 已补齐"
-          fi
-          if grep -q 'SUSFS_IS_INODE_SUS_MAP' mm/memory.c && ! grep -qF 'susfs_def.h' mm/memory.c; then
-            grep -qF '#include <linux/zswap.h>' mm/memory.c && sed -i '/#include <linux/zswap.h>/a #ifdef CONFIG_KSU_SUSFS_SUS_MAP\n#include <linux/susfs_def.h>\n#endif' mm/memory.c || sed -i '/#include <linux/sched/sysctl.h>/a #ifdef CONFIG_KSU_SUSFS_SUS_MAP\n#include <linux/susfs_def.h>\n#endif' mm/memory.c
-            echo "  memory.c susfs_def.h 已补齐"
-          fi
+          #if grep -q 'SUSFS_IS_INODE_SUS_MAP\|susfs_is_current_proc_umounted\|SUSFS_IS_INODE_OPEN_REDIRECT' fs/proc/base.c && ! grep -qF 'susfs_def.h' fs/proc/base.c; then
+           # grep -qF '#include <linux/dma-buf.h>' fs/proc/base.c || sed -i '/#include <linux/cpufreq_times.h>/a #include <linux/dma-buf.h>' fs/proc/base.c
+            #sed -i '/#include <linux/dma-buf.h>/a #endif' fs/proc/base.c
+            #sed -i '/#include <linux/dma-buf.h>/a #include <linux/susfs_def.h>' fs/proc/base.c
+            #sed -i '/#include <linux/dma-buf.h>/a #if defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)' fs/proc/base.c
+            #echo "  base.c susfs_def.h 已补齐"
+          #fi
+          #if grep -q 'SUSFS_IS_INODE_SUS_MAP' mm/memory.c && ! grep -qF 'susfs_def.h' mm/memory.c; then
+           # grep -qF '#include <linux/zswap.h>' mm/memory.c && sed -i '/#include <linux/zswap.h>/a #ifdef CONFIG_KSU_SUSFS_SUS_MAP\n#include <linux/susfs_def.h>\n#endif' mm/memory.c || sed -i '/#include <linux/sched/sysctl.h>/a #ifdef CONFIG_KSU_SUSFS_SUS_MAP\n#include <linux/susfs_def.h>\n#endif' mm/memory.c
+            #echo "  memory.c susfs_def.h 已补齐"
+          #fi
 
           # 补丁完整性检查 (有 .rej 则报警)
-          REJ_COUNT=$(find . -name "*.rej" 2>/dev/null | wc -l)
-          if [ "$REJ_COUNT" -gt 0 ]; then
-            echo "::warning::存在 $REJ_COUNT 个 .rej 补丁冲突文件:"
-            find . -name "*.rej" 2>/dev/null | head -10
-          else
-            echo "SUSFS 补丁应用完整 (无冲突)"
-          fi
+          #REJ_COUNT=$(find . -name "*.rej" 2>/dev/null | wc -l)
+          #if [ "$REJ_COUNT" -gt 0 ]; then
+           # echo "::warning::存在 $REJ_COUNT 个 .rej 补丁冲突文件:"
+            #find . -name "*.rej" 2>/dev/null | head -10
+          #else
+           # echo "SUSFS 补丁应用完整 (无冲突)"
+          #fi
 
       # ==================== 应用功能补丁 (patches.py 模块) ====================
       - name: 应用功能补丁
@@ -336,9 +336,6 @@ jobs:
           }
 
           # KSU / 功能项
-          enable_config_if_defined CONFIG_KSU
-          enable_config_if_defined CONFIG_KSU_NETISOLATE
-          enable_config_if_defined CONFIG_KSU_FUSEBPF_FIX
           # ipset 全家桶
           for c in CONFIG_IP_SET CONFIG_IP_SET_BITMAP_IP CONFIG_IP_SET_BITMAP_IPMAC CONFIG_IP_SET_BITMAP_PORT CONFIG_IP_SET_HASH_IP CONFIG_IP_SET_HASH_IPMARK CONFIG_IP_SET_HASH_IPPORT CONFIG_IP_SET_HASH_IPPORTIP CONFIG_IP_SET_HASH_IPPORTNET CONFIG_IP_SET_HASH_MAC CONFIG_IP_SET_HASH_NET CONFIG_IP_SET_HASH_NETIFACE CONFIG_IP_SET_HASH_NETNET CONFIG_IP_SET_HASH_NETPORT CONFIG_IP_SET_HASH_NETPORTNET CONFIG_IP_SET_LIST_SET CONFIG_NETFILTER_XT_SET; do
             enable_config_if_defined $c
@@ -396,22 +393,7 @@ jobs:
           fi
 
           # SUSFS 配置 (参考 GKI_KernelSU_SUSFS)
-          if true; then
-            cat >> $DEFCONFIG << 'SUSFS_EOF'
-          CONFIG_KSU_SUSFS=y
-          CONFIG_KSU_SUSFS_SUS_PATH=y
-          CONFIG_KSU_SUSFS_SUS_MOUNT=y
-          CONFIG_KSU_SUSFS_SUS_KSTAT=y
-          CONFIG_KSU_SUSFS_SPOOF_UNAME=y
-          CONFIG_KSU_SUSFS_ENABLE_LOG=y
-          CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y
-          CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y
-          CONFIG_KSU_SUSFS_OPEN_REDIRECT=y
-          CONFIG_KSU_SUSFS_SUS_MAP=y
-          SUSFS_EOF
-            echo "SUSFS CONFIG 已追加"
-          fi
-
+          
           # 生成 fragment (diff defconfig vs .orig, 参考 GKI_KernelSU_SUSFS)
           diff "$DEFCONFIG.orig" "$DEFCONFIG" | grep '^>' | sed 's/^> //; s/^[[:space:]]*//' > $FRAG || true
           # 不还原 defconfig (保留 ADIOS 默认等 choice 修改; check_defconfig 已关闭)
