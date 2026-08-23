@@ -56,16 +56,16 @@ features:
   # ---- 特殊修复 ----
   extract_cert_fix: true         # extract-cert.c PKCS11 key_pass LTS bug (make 直编必需)
   pkg_visibility: false          # FUSE 包目录隔离 (堵 /sdcard/Android/data 枚举 + /data/data 探测; root 授权 app 自动豁免)
-  fusebpf: true                  # FUSEBPF 修复 (lookup_revalidate + no-Eexist)
+  fusebpf: false                 # FUSEBPF 修复 (lookup_revalidate + no-Eexist)
   zram_lz4kd: true               # zram LZ4 补丁栈 (LZ4 1.10/lz4k/lz4kd)
-  unicode_bypass: true           # Unicode 零宽字符绕过 (需 SUSFS)
+  unicode_bypass: false          # Unicode 零宽字符绕过 (需 SUSFS)
 
   # ---- 安全/防格机 ----
   cve_fix: true                 # CVE-2026-43499 rtmutex 修复链
   bbg: false                    # BBG 防格机 (Kconfig 挂载不完整, 保持关闭)
   lts_fixes: false              # 已移除 (不跟随 LTS)
   ipset: true                   # ipset 网络支持 (代理分流/防火墙)
-  nomount: true                 # NoMount VFS 文件重定向 (无挂载痕迹)
+  nomount: false                # NoMount VFS 文件重定向 (无挂载痕迹)
 
 # ============ zram 配置 (zram_lz4kd 开启时生效) ============
 zram:
