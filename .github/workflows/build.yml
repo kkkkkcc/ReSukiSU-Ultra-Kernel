@@ -237,41 +237,8 @@ jobs:
           fi
 
       # ==================== 强制 ADIOS 默认 (elevator.c 拦截, 防 init.qti 切 cpq) ====================
-      - name: 强制 ADIOS 默认 (elevator.c 拦截)
-        run: |
-          set -e
-          EV=build/repo/common/block/elevator.c
-          test -f "$EV" || { echo "::error::elevator.c 不存在"; exit 1; }
-          python3 - "$EV" << 'EOF'
-          import sys
-          ev = sys.argv[1]
-          txt = open(ev).read()
-          changed = []
-          failed = []
-          seg = txt.split("elevator_get_default")[1][:400] if "elevator_get_default" in txt else ""
-          if "CONFIG_MQ_IOSCHED_DEFAULT_ADIOS" not in seg:
-              for old in ('\treturn elevator_find_get(q, "mq-deadline");',
-                          'return elevator_find_get(q, "mq-deadline");'):
-                  if old in txt:
-                      new = ('#ifdef CONFIG_MQ_IOSCHED_DEFAULT_ADIOS\n'
-                             '\treturn elevator_find_get(q, "adios");\n'
-                             '#else\n'
-                             '\treturn elevator_find_get(q, "mq-deadline");\n'
-                             '#endif')
-                      txt = txt.replace(old, new, 1)
-                      changed.append("elevator_get_default -> adios")
-                      break
-              else:
-                  failed.append("elevator_get_default 锚点未匹配")
-          open(ev, 'w').write(txt)
-          for c in changed:
-              print("已注入:", c)
-          if failed:
-              for f in failed:
-                  print("::warning::" + f)
-              exit(1)
-          print("elevator.c: ADIOS 强制完成 (默认 adios + 切换保护)")
-          EOF
+      #- name: 强制 ADIOS 默认 (elevator.c 拦截)
+        
 
       # ==================== MGLRU 强制全开 (FORCE3, 防 init.rc 关闭) ====================
       - name: 强制 MGLRU (vmscan FORCE3)
@@ -341,21 +308,21 @@ jobs:
             enable_config_if_defined $c
           done
           # ADIOS IO 调度器 (choice 默认 → ADIOS; 真正生效靠 elevator.c 拦截步骤)
-          enable_config_if_defined CONFIG_MQ_IOSCHED_ADIOS
-          if config_defined CONFIG_MQ_IOSCHED_DEFAULT_ADIOS; then
+          #enable_config_if_defined CONFIG_MQ_IOSCHED_ADIOS
+          #if config_defined CONFIG_MQ_IOSCHED_DEFAULT_ADIOS; then
             # choice: 替换 gki_defconfig 现有的默认调度器 (如 DEADLINE/CPQ) → ADIOS
             # 注意: 不要碰 CONFIG_DEFAULT_IOSCHED (Kconfig 无 prompt 的隐式字符串, 显式设置会被校验拒绝)
-            sed -i 's/^CONFIG_MQ_IOSCHED_DEFAULT_[A-Z0-9_]*=y$/CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y/' $DEFCONFIG
-            grep -q '^CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y' $DEFCONFIG || echo 'CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y' >> $DEFCONFIG
-            echo "  ADIOS choice 已设为默认"
+            #sed -i 's/^CONFIG_MQ_IOSCHED_DEFAULT_[A-Z0-9_]*=y$/CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y/' $DEFCONFIG
+            #grep -q '^CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y' $DEFCONFIG || echo 'CONFIG_MQ_IOSCHED_DEFAULT_ADIOS=y' >> $DEFCONFIG
+            #echo "  ADIOS choice 已设为默认"
             # 诊断: 打印 gki_defconfig 调度器相关行
-            echo "  --- gki_defconfig 调度器 ---"
-            grep -E "IOSCHED" $DEFCONFIG | head -5
+            #echo "  --- gki_defconfig 调度器 ---"
+            #grep -E "IOSCHED" $DEFCONFIG | head -5
           else
-            echo "  !! CONFIG_MQ_IOSCHED_DEFAULT_ADIOS Kconfig 未声明 (adios 补丁可能未生效)"
+            #echo "  !! CONFIG_MQ_IOSCHED_DEFAULT_ADIOS Kconfig 未声明 (adios 补丁可能未生效)"
           fi
           # SSG IO 调度器 (Samsung) — 不开 SSG_CGROUP (6.6 无 cpd_init_fn, ratio=0 降速)
-          enable_config_if_defined CONFIG_MQ_IOSCHED_SSG
+          #enable_config_if_defined CONFIG_MQ_IOSCHED_SSG
 
           # MGLRU (显式开启, 强制 0x3)
           enable_config_if_defined CONFIG_LRU_GEN
