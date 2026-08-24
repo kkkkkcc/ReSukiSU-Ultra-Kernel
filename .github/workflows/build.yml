@@ -236,6 +236,47 @@ jobs:
             echo "功能补丁应用完整 (无 .rej 冲突)"
           fi
 
+      # ==================== 通用性能补丁 (WildKernels common, 游戏+日用) ====================
+      - name: 应用通用性能补丁 (游戏+日用)
+        run: |
+          set -e
+          KP=$GITHUB_WORKSPACE/third_party/kernel_patches/common
+          cd build/repo/common
+          for P in \
+            force_tcp_nodelay \
+            disable_cache_hot_buddy \
+            adjust_cpu_scan_order \
+            f2fs_enlarge_min_fsync_blocks \
+            f2fs_reduce_congestion \
+            reduce_gc_thread_sleep_time \
+            increase_sk_mem_packets \
+            increase_ext4_default_commit_age \
+            minimise_wakeup_time \
+            avoid_extra_s2idle_wake_attempts \
+            reduce_freeze_timeout \
+            reduce_pci_pme_wakeups
+          do
+            F="$KP/$P.patch"
+            test -f "$F" || { echo "::error::补丁缺失: $F"; exit 1; }
+            if git apply --check "$F" 2>/dev/null; then
+              git apply "$F" && echo "  ✓ $P (git apply)"
+            elif git apply --check -R "$F" 2>/dev/null; then
+              echo "  = $P 已应用, 跳过"
+            elif patch -p1 -F 3 -N --batch < "$F" >/dev/null 2>&1; then
+              echo "  ✓ $P (patch -F 3)"
+            else
+              echo "::error::$P 应用失败"
+              exit 1
+            fi
+          done
+          REJ=$(find . -name "*.rej" 2>/dev/null | wc -l)
+          if [ "$REJ" -gt 0 ]; then
+            echo "::error::通用性能补丁存在 $REJ 个 .rej:"
+            find . -name "*.rej" | head -10
+            exit 1
+          fi
+          echo "通用性能补丁应用完成 (12 个)"
+
       # ==================== 强制 ADIOS 默认 (elevator.c 拦截, 防 init.qti 切 cpq) ====================
       #- name: 强制 ADIOS 默认 (elevator.c 拦截)
         
