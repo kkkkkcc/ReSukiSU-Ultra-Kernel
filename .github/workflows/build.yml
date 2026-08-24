@@ -318,9 +318,9 @@ jobs:
             # 诊断: 打印 gki_defconfig 调度器相关行
             #echo "  --- gki_defconfig 调度器 ---"
             #grep -E "IOSCHED" $DEFCONFIG | head -5
-          else
+          #else
             #echo "  !! CONFIG_MQ_IOSCHED_DEFAULT_ADIOS Kconfig 未声明 (adios 补丁可能未生效)"
-          fi
+          #fi
           # SSG IO 调度器 (Samsung) — 不开 SSG_CGROUP (6.6 无 cpd_init_fn, ratio=0 降速)
           #enable_config_if_defined CONFIG_MQ_IOSCHED_SSG
 
