@@ -37,7 +37,7 @@ features:
   uksm: false                    # UKSM 内存去重 — 已禁用: 与 ART GC 冲突致 system_server 崩溃死机 (bugreport 2026-08-10)
 
   # ---- IO 调度 ----
-  adios: true                    # ADIOS IO 调度器 (设为默认调度器)
+  adios: false                   # ADIOS IO 调度器 (设为默认调度器)
   ssg: true                      # SSG IO 调度器 (Samsung, 可选切换; 不开 CGROUP 因 6.6 无 cpd_init_fn)
   ufs_fastdiscard: true          # UFS FastDiscard (fstrim 加速)
   zstd: true                     # zstd 1.5.7 (压缩级别可调)
